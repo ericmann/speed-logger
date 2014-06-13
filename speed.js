@@ -19,12 +19,14 @@ function log_speed() {
 		output[1] = output[1].replace( 'Download: ', '' ).replace( ' Mbits/s', '' );
 		output[2] = output[2].replace( 'Upload: ', '' ).replace( ' Mbits/s', '' );
 
+		output.unshift( Date.now() );
+
 		logger.write( output.join( ',' ) );
 		logger.write( '\r\n' );
 
 		tester.kill();
 
-		setTimeout( log_speed, 5 * 60 * 1000 );
+		setTimeout( log_speed, 10 * 60 * 1000 ); // Run the test again in 10 minutes
 	} );
 
 	tester.stderr.on( 'data', function( data ) {
