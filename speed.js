@@ -52,21 +52,23 @@ if(options.enableWebInterface) {
 	//Initialise Socket IO
 	var io = require('socket.io').listen(server);
 	server.listen(options.webInterfacePort, options.webInterfaceListenIp);
-
-	//Read CSV to show history
-	var stream = fs.createReadStream(options.loggerFileName);
-	var pings = [], downloads = [], uploads = [];
-	var csvStream = csv()
-		.on("data", function(data){
+		
+	//On client connect push history
+	io.sockets.on('connection', function (socket) {
+		//Read CSV to show history
+		var stream = fs.createReadStream(options.loggerFileName);
+		var pings = [], downloads = [], uploads = [];
+		var csvStream = csv()
+		  .on("data", function(data){
 			pings.push([(new Date(data[0])).getTime(), parseFloat(data[2])]);
 			downloads.push([(new Date(data[0])).getTime(), parseFloat(data[3])]);
 			uploads.push([(new Date(data[0])).getTime(), parseFloat(data[4])]);
 		});
-	stream.pipe(csvStream);	
+		stream.pipe(csvStream);	
 
 
-	//Make series for Highcharts
-	var series = [
+		//Make series for Highcharts
+		var series = [
 		{
 			name:'Pings',
 			data: pings, 
@@ -81,11 +83,10 @@ if(options.enableWebInterface) {
 			data: uploads, 
 			yAxis: 1
 		}
-	];
-		
-	//On client connect push history
-	io.sockets.on('connection', function (socket) {
-		socket.emit('history', series);
+		];
+		csvStream.on("end",function(){
+			socket.emit('history', series);
+		});
 	});
 }
 
