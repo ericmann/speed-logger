@@ -20,17 +20,40 @@ Requires the speedtest-cli Python CLI tool: https://github.com/sivel/speedtest-c
 ## Options
 All in the first line of speed.js
 
-	interval: 60,                    // Interval of test in second
-	logger: true,                    // Save test result
-	loggerFileName: 'log.csv',       // Name of file to save history
-	
-	enableWebInterface: true,        // Web interface of result
-	webInterfacePort: 3131,          // Port of web interface, WARNING you must update indes.html
-	webInterfaceListenIp: "0.0.0.0", // IP to start server, WARNING you must update indes.html
-	
-	enableCLICharts: true,           // Show graph in CLI
-	clearCLIBetweenTest: true,       // Clear screen between test
-	hideRunning: false               // Hide <<Running test...>>
+```javascript
+  interval: 60,                    // Interval of test in second
+  logger: true,                    // Save test result
+  loggerFileName: 'log.csv',       // Name of file to save history
+
+  enableWebInterface: true,        // Web interface of result
+  webInterfacePort: 3131,          // Port of web interface, WARNING you must update indes.html
+  webInterfaceListenIp: "0.0.0.0", // IP to start server, WARNING you must update indes.html
+
+  enableCLICharts: true,           // Show graph in CLI
+  clearCLIBetweenTest: true,       // Clear screen between test
+  consoleLog: false,               // Output logging to console
+  
+  secureDomains: null,             // Array of strings [ 'www.example.com' ]
+  secureAdminEmail: 'youremail@here.com' //The admin for the secure email confirmation
+```
+
+## Secure http connection
+
+You can secure the http connection by creating a [letsencrypt](https://letsencrypt.org/) key as explained below. Configure the secureDomains and secureAdminEmail
+
+```sh
+ # Install software letsencrypt 
+ wget https://dl.eff.org/certbot-auto
+ chmod a+x certbot-auto
+ # Create dns entry and add _acme-challenge as TXT with key value
+ ./certbot-auto certonly --agree-tos --renew-by-default --manual --preferred-challenges=dns -d www.example.com 
+ # Copy keys to certs: cp /etc/letsencrypt/* ./certs/ -r
+ # To renew key if required
+ ./certbot-auto renew
+```
+
+ 
+ 
 
 ## Goals
 

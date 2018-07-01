@@ -9,8 +9,8 @@ var options = {
 	enableCLICharts: false,          // Show graph in CLI
 	clearCLIBetweenTest: false,    // Clear screen between test
 	consoleLog: false,           // Output logging to console
- //secureDomains: null,          // Array of strings [ 'www.example.com' ]
- // secureAdminEmail: 'youremail@here.com' //The admin for the secure email confirmation
+  secureDomains: null,          // Array of strings [ 'www.example.com' ]
+  secureAdminEmail: 'youremail@here.com' //The admin for the secure email confirmation
  
   /** Secure uses https://letsencrypt.org/
      # Install software letsencrypt 
