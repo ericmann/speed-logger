@@ -5,12 +5,12 @@ var options = {
 	loggerFileName: 'log.csv',       // Name of file to save history
 	
 	enableWebInterface: true,        // Web interface of result
-	webInterfacePort: 3131,          // Port of web interface, WARNING you must update indes.html
-	webInterfaceListenIp: "0.0.0.0", // IP to start server, WARNING you must update indes.html
+	webInterfacePort: 3131,          // Port of web interface
+	webInterfaceListenIp: "0.0.0.0", // IP to start server
 	
 	enableCLICharts: false,          // Show graph in CLI
 	clearCLIBetweenTest: false,      // Clear screen between test
-	hideRunning: true                //Hide <<Running test...>>
+	consoleLog: false                // Output logging to console
 	
 };
 /****** END OPTIONS ****/
@@ -40,7 +40,9 @@ if (!String.prototype.format) {
 }
 
 if(options.enableWebInterface) {
-	console.log('Start webserver on {0}:{1}'.format(options.webInterfaceListenIp, options.webInterfacePort));
+  if (consoleLog) 
+	  console.log('Start webserver on {0}:{1}'.format(options.webInterfaceListenIp, options.webInterfacePort));
+
 	//Webserver
 	var server = http.createServer(function(req, res) {
 		fs.readFile('./index.html', 'utf-8', function(error, content) {
@@ -98,7 +100,7 @@ if(options.enableCLICharts) {
 }
 	
 function log_speed() {
-	if(!options.hideRunning)
+	if(options.consoleLog)
 		console.log( "\n Running test ..." );
 
 	var tester = child.exec( 'speedtest-cli --json' );
@@ -113,11 +115,12 @@ function log_speed() {
 		pertinant_data[4] = out.upload;
 		pertinant_data[5] = out.server.sponsor;
 
-		if(options.clearCLIBetweenTest)
+		if(options.clearCLIBetweenTest && options.enableCLICharts)
 			console.log('\033c');
 		
 		//Output result to console
-		console.log('{0} => IP: {1} | Ping: {2}ms | Download: {3} | Upload: {4} | Server: {5}'.format(pertinant_data[0], pertinant_data[1], pertinant_data[2], formatBytes(pertinant_data[3]), formatBytes(pertinant_data[4]), pertinant_data[5]));
+    if(options.consoleLog)
+		  console.log('{0} => IP: {1} | Ping: {2}ms | Download: {3} | Upload: {4} | Server: {5}'.format(pertinant_data[0], pertinant_data[1], pertinant_data[2], formatBytes(pertinant_data[3]), formatBytes(pertinant_data[4]), pertinant_data[5]));
 		
 		if(options.enableWebInterface) {
 			//Append to html chart
