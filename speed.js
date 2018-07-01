@@ -53,7 +53,7 @@ if (!String.prototype.format) {
 
 if(options.enableWebInterface) {
   if (options.consoleLog) 
-	  console.log('Start {0}webserver on {1}:{2} every {3} minutes refresh'.format(options.secureDomain && options.secureAdminEmail ? "secure" :"", options.webInterfaceListenIp, options.webInterfacePort,Math.round(options.interval/60)));
+	  console.log('Start {0}webserver on {1}:{2} every {3} minutes refresh'.format(options.secureDomains && options.secureAdminEmail ? "secure" :"", options.webInterfaceListenIp, options.webInterfacePort,Math.round(options.interval/60)));
 
   var server;
   if (options.secureDomains && options.secureAdminEmail) { 
