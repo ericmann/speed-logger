@@ -154,13 +154,15 @@ function log_speed() {
 		}
 
 		tester.kill();
-
-		setTimeout( log_speed, options.interval * 1000 ); // Run the test again in 10 minutes
+		setTimeout( log_speed, options.interval * 1000 ); // Run the test again
 	} );
 
 	tester.stderr.on( 'data', function( data ) {
 		console.log( 'Error requesting data from Speedtest.net' );
 		console.log( data );
+    
+    tester.kill();
+    setTimeout( log_speed, options.interval * 1000 ); // Run the test again
 	} );
 }
 
