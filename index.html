@@ -111,7 +111,7 @@
 			}, {
 				count: 15,
 				type: 'minute',
-				text: '5M'
+				text: '15M'
 			}, {
 				count: 30,
 				type: 'minute',
@@ -163,6 +163,9 @@
 	socket.on('history', function (history) {
 		// when a history arrives we plot it
 		console.log("get history");
+    // Remove all the data
+    while(chart.series.length > 0)
+      chart.series[0].remove(false);
 		history.forEach(function(serie, key) {
 			serie['tooltip'] = {
 				pointFormatter: pointFormatter
