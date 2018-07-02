@@ -1,27 +1,39 @@
 /****** OPTIONS *******/
 var options = {
-	interval: 60,                    // Interval of test in second
+	interval: 600,                   // Interval of test in second
 	logger: true,                    // Save test result
 	loggerFileName: 'log.csv',       // Name of file to save history
-	
 	enableWebInterface: true,        // Web interface of result
-	webInterfacePort: 3131,          // Port of web interface, WARNING you must update indes.html
-	webInterfaceListenIp: "0.0.0.0", // IP to start server, WARNING you must update indes.html
-	
+  webInterfacePort: 3131,          // Port of web interface
+	webInterfaceListenIp: "0.0.0.0", // IP to start server
 	enableCLICharts: false,          // Show graph in CLI
-	clearCLIBetweenTest: false,      // Clear screen between test
-	hideRunning: true                //Hide <<Running test...>>
-	
+	clearCLIBetweenTest: false,    // Clear screen between test
+	consoleLog: false,           // Output logging to console
+  secureDomains: null,          // Array of strings [ 'www.example.com' ]
+  secureAdminEmail: 'youremail@here.com' //The admin for the secure email confirmation
+ 
+  /** Secure uses https://letsencrypt.org/
+     # Install software letsencrypt 
+     wget https://dl.eff.org/certbot-auto
+     chmod a+x certbot-auto
+     # Create dns entry and add _acme-challenge as TXT with key value
+     ./certbot-auto certonly --agree-tos --renew-by-default --manual --preferred-challenges=dns -d www.example.com 
+     # Copy keys to certs: cp /etc/letsencrypt/* ./certs/ -r
+     # To renew key if required
+     ./certbot-auto renew
+ */ 
 };
 /****** END OPTIONS ****/
+
 
 var fs = require( 'fs' ),
 	child = require( 'child_process' ),
 	logger = fs.createWriteStream( options.loggerFileName, { 'flags': 'a' } ),
 	asciichart = require ('asciichart'),
 	http = require("http"),
-    url = require("url"),
-    path = require("path"),
+  https = require('https'), 
+  url = require("url"),
+  path = require("path"),
 	csv = require("fast-csv"),
 	date = require("./libs/date"),
 	formatBytes = require("./libs/formatBytes");
@@ -40,33 +52,72 @@ if (!String.prototype.format) {
 }
 
 if(options.enableWebInterface) {
-	console.log('Start webserver on {0}:{1}'.format(options.webInterfaceListenIp, options.webInterfacePort));
+  if (options.consoleLog) 
+	  console.log('Start {0}webserver on {1}:{2} every {3} minutes refresh'.format(options.secureDomains && options.secureAdminEmail ? "secure" :"", options.webInterfaceListenIp, options.webInterfacePort,Math.round(options.interval/60)));
+
+  var server;
+  if (options.secureDomains && options.secureAdminEmail) { 
+     const PROD = true;
+     var path = require('path');
+     //var os = require('os')
+     var Greenlock = require('greenlock');
+     var greenlockCfg = {
+        agreeTos: true                      // Accept Let's Encrypt v2 Agreement
+      , email: options.secureAdminEmail           // IMPORTANT: Change email and domains
+      , approveDomains: options.secureDomains
+      , communityMember: false              // Optionally get important updates (security, api changes, etc)
+                                            // and submit stats to help make Greenlock better
+      , version: 'draft-11'
+      , server: PROD ? 'https://acme-v02.api.letsencrypt.org/directory' 
+            : 'https://acme-staging-v02.api.letsencrypt.org/directory'
+      , configDir: path.join(__dirname, '/certs')
+      , challengeType: 'dns-01' 
+     };
+
+     var greenlock = Greenlock.create(greenlockCfg);
+   if (options.consoleLog) {
+     console.log('Make sure you have the certificates in: {0}'.format(greenlockCfg.configDir));
+    }
+   // var redir = require('redirect-https')();
+   // require('http').createServer(greenlock.middleware(redir)).listen(80);
+    server = https.createServer(greenlock.tlsOptions, 
+      function(req, res) {
+      fs.readFile('./index.html', 'utf-8', function(error, content) {
+        res.writeHead(200, {"Content-Type": "text/html"});
+        res.end(content);
+      })
+     }
+    );
+  } else {
 	//Webserver
-	var server = http.createServer(function(req, res) {
+	 server = http.createServer(function(req, res) {
 		fs.readFile('./index.html', 'utf-8', function(error, content) {
 			res.writeHead(200, {"Content-Type": "text/html"});
 			res.end(content);
 		});
 	});
+ }
 
 	//Initialise Socket IO
 	var io = require('socket.io').listen(server);
 	server.listen(options.webInterfacePort, options.webInterfaceListenIp);
-
-	//Read CSV to show history
-	var stream = fs.createReadStream(options.loggerFileName);
-	var pings = [], downloads = [], uploads = [];
-	var csvStream = csv()
-		.on("data", function(data){
+		
+	//On client connect push history
+	io.sockets.on('connection', function (socket) {
+		//Read CSV to show history
+		var stream = fs.createReadStream(options.loggerFileName);
+		var pings = [], downloads = [], uploads = [];
+		var csvStream = csv()
+		  .on("data", function(data){
 			pings.push([(new Date(data[0])).getTime(), parseFloat(data[2])]);
 			downloads.push([(new Date(data[0])).getTime(), parseFloat(data[3])]);
 			uploads.push([(new Date(data[0])).getTime(), parseFloat(data[4])]);
 		});
-	stream.pipe(csvStream);	
+		stream.pipe(csvStream);	
 
 
-	//Make series for Highcharts
-	var series = [
+		//Make series for Highcharts
+		var series = [
 		{
 			name:'Pings',
 			data: pings, 
@@ -81,11 +132,10 @@ if(options.enableWebInterface) {
 			data: uploads, 
 			yAxis: 1
 		}
-	];
-		
-	//On client connect push history
-	io.sockets.on('connection', function (socket) {
-		socket.emit('history', series);
+		];
+		csvStream.on("end",function(){
+			socket.emit('history', series);
+		});
 	});
 }
 
@@ -97,7 +147,7 @@ if(options.enableCLICharts) {
 }
 	
 function log_speed() {
-	if(!options.hideRunning)
+	if(options.consoleLog)
 		console.log( "\n Running test ..." );
 
 	var tester = child.exec( 'speedtest-cli --json' );
@@ -112,11 +162,12 @@ function log_speed() {
 		pertinant_data[4] = out.upload;
 		pertinant_data[5] = out.server.sponsor;
 
-		if(options.clearCLIBetweenTest)
+		if(options.clearCLIBetweenTest && options.enableCLICharts)
 			console.log('\033c');
 		
 		//Output result to console
-		console.log('{0} => IP: {1} | Ping: {2}ms | Download: {3} | Upload: {4} | Server: {5}'.format(pertinant_data[0], pertinant_data[1], pertinant_data[2], formatBytes(pertinant_data[3]), formatBytes(pertinant_data[4]), pertinant_data[5]));
+    if(options.consoleLog)
+		  console.log('{0} => IP: {1} | Ping: {2}ms | Download: {3} | Upload: {4} | Server: {5}'.format(pertinant_data[0], pertinant_data[1], pertinant_data[2], formatBytes(pertinant_data[3]), formatBytes(pertinant_data[4]), pertinant_data[5]));
 		
 		if(options.enableWebInterface) {
 			//Append to html chart
@@ -150,13 +201,15 @@ function log_speed() {
 		}
 
 		tester.kill();
-
-		setTimeout( log_speed, options.interval * 1000 ); // Run the test again in 10 minutes
+		setTimeout( log_speed, options.interval * 1000 ); // Run the test again
 	} );
 
 	tester.stderr.on( 'data', function( data ) {
 		console.log( 'Error requesting data from Speedtest.net' );
 		console.log( data );
+    
+    tester.kill();
+    setTimeout( log_speed, options.interval * 1000 ); // Run the test again
 	} );
 }
 

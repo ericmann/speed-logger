@@ -22,6 +22,7 @@
   "dependencies": {
     "asciichart": "^1.5.7",
     "fast-csv": "^2.4.1",
+    "greenlock": "^2.3.2",
     "socket.io": "^2.1.1"
   }
 }
