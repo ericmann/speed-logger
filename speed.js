@@ -201,24 +201,17 @@ function log_speed() {
 				logger.write( '\r\n' );
 			}
 
-			tester.kill();
-			setTimeout( log_speed, options.interval * 1000 ); // Run the test again
 		} catch (ex){
-			if(options.logger) {
-				console.error( 'Error requesting data from Speedtest.net', ex );
-			}
-			tester.kill();
-			setTimeout( log_speed, options.interval * 1000 ); // Run the test again
+			console.error( 'Error parsing data from speedtest.net: ' + data);
+			console.error( ex )
 		}
 
 	} );
 
-	tester.stderr.on( 'data', function( data ) {
-		console.log( 'Error requesting data from Speedtest.net' );
-		console.log( data );
+	tester.on( 'close', function( data ) {
+		tester.kill();
+		setTimeout( log_speed, options.interval * 1000 ); // Run the test again
 
-    tester.kill();
-    setTimeout( log_speed, options.interval * 1000 ); // Run the test again
 	} );
 }
 
