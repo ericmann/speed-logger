@@ -21,8 +21,8 @@
   "homepage": "https://github.com/ericmann/speed-logger#readme",
   "dependencies": {
     "asciichart": "^1.5.7",
-    "fast-csv": "^2.4.1",
-    "greenlock": "^2.3.2",
-    "socket.io": "^2.1.1"
+    "fast-csv": "^2.5.0",
+    "greenlock": "^2.7.17",
+    "socket.io": "^2.2.0"
   }
 }
