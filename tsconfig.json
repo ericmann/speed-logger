@@ -1,0 +1,16 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"pretty": true,
+		"allowJs": false,
+		"inlineSourceMap": false,
+		"strict": true,
+		"strictNullChecks": false,
+		"noUnusedLocals": true,
+		"suppressImplicitAnyIndexErrors": true,
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"sourceMap": true,
+		"allowSyntheticDefaultImports": true
+	}
+}

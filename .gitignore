@@ -1,3 +1,6 @@
 .idea
 log.csv
 node_modules/
+*.log
+src/client/webpack/*.js
+dist/
